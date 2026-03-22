@@ -10,6 +10,7 @@ import { DB_ADDRESS } from './config'
 import errorHandler from './middlewares/error-handler'
 import serveStatic from './middlewares/serverStatic'
 import routes from './routes'
+import { csrfErrorHandler, csrfMiddleware, csrfProtection } from 'middlewares/csrf'
 
 const { PORT = 3000 } = process.env
 const app = express()
@@ -18,6 +19,16 @@ app.use(cookieParser())
 
 app.use(cors({ origin: process.env.ORIGIN_ALLOW, credentials: true }));
 // app.use(express.static(path.join(__dirname, 'public')));
+
+app.get('/csrf-token', csrfProtection, csrfMiddleware)
+
+app.use((req, res, next) => {
+    if(!['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+        csrfProtection(req, res, next);
+    } else {
+        next();
+    }
+});
 
 app.use(serveStatic(path.join(__dirname, 'public')))
 
@@ -29,6 +40,7 @@ app.options('*', cors())
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 , limit: 50}))
 app.use(routes)
 app.use(errors())
+app.use(csrfErrorHandler)
 app.use(errorHandler)
 
 // eslint-disable-next-line no-console

@@ -65,6 +65,7 @@ const RouteComponent = () => {
     const handleModalClose = (path: To | number) => () => navigate(path as To)
 
     useEffect(() => {
+        
         checkUserAuth()
             .unwrap()
             .finally(() => authCheck())

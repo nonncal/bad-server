@@ -17,6 +17,7 @@ import {
     UserResponseToken,
 } from '@types'
 import { getCookie, setCookie } from './cookie'
+import { fetchCsrfToken } from './csrf'
 
 export const enum RequestStatus {
     Idle = 'idle',
@@ -54,10 +55,15 @@ class Api {
     }
 
     protected async request<T>(endpoint: string, options: RequestInit) {
+        const headers = {
+            ...options.headers,
+            'CSRF-Token': await fetchCsrfToken(),
+        }
         try {
             const res = await fetch(`${this.baseUrl}${endpoint}`, {
                 ...this.options,
                 ...options,
+                headers,
             })
             return await this.handleResponse<T>(res)
         } catch (error) {
@@ -88,6 +94,7 @@ class Api {
                 ...options,
                 headers: {
                     ...options.headers,
+                    'CSRF-Token': await fetchCsrfToken(),
                     Authorization: `Bearer ${getCookie('accessToken')}`,
                 },
             })
