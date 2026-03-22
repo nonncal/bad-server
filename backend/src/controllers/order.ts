@@ -5,6 +5,7 @@ import NotFoundError from '../errors/not-found-error'
 import Order, { IOrder } from '../models/order'
 import Product, { IProduct } from '../models/product'
 import User from '../models/user'
+import sanitizeHtml from 'sanitize-html'
 import escapeRegExp from 'utils/escapeRegExp'
 
 // eslint-disable-next-line max-len
@@ -295,7 +296,7 @@ export const createOrder = async (
         const userId = res.locals.user._id
         const { address, payment, phone, total, email, items, comment } =
             req.body
-
+        const purifyedComment = sanitizeHtml(comment)
         items.forEach((id: Types.ObjectId) => {
             const product = products.find((p) => p._id.equals(id))
             if (!product) {
@@ -317,7 +318,7 @@ export const createOrder = async (
             payment,
             phone,
             email,
-            comment,
+            comment: purifyedComment,
             customer: userId,
             deliveryAddress: address,
         })

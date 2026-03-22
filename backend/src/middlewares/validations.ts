@@ -35,8 +35,10 @@ export const validateOrderBody = celebrate({
         email: Joi.string().email().required().messages({
             'string.empty': 'Не указан email',
         }),
-        phone: Joi.string().required().pattern(phoneRegExp).messages({
+        phone: Joi.string().required().pattern(phoneRegExp).max(15).min(5).messages({
             'string.empty': 'Не указан телефон',
+            'string.min': 'Номер телефон слишком короткий',
+            'string.max': 'Номер телефона слишком длинный',
         }),
         address: Joi.string().required().messages({
             'string.empty': 'Не указан адрес',
@@ -133,3 +135,44 @@ export const validateAuthentication = celebrate({
         }),
     }),
 })
+
+export const validateCustomerQuery = celebrate({
+    query: Joi.object({
+        page: Joi.number().integer().min(1).max(100),
+        limit: Joi.number().integer().min(1).max(100),
+        sortField: Joi.string().valid('createdAt', 'totalAmount', 'orderCount', 'lastOrderDate'),
+        sortOrder: Joi.string().valid('asc', 'desc'),
+        search: Joi.string(),
+        registrationDateFrom: Joi.date().iso().optional(),
+        registrationDateTo: Joi.date().iso().optional(),
+        lastOrderDateFrom: Joi.date().iso().optional(),
+        lastOrderDateTo: Joi.date().iso().optional(),
+        totalAmountFrom: Joi.number().optional(),
+        totalAmountTo: Joi.number().optional(),
+        orderCountFrom: Joi.number().optional(),
+        orderCountTo: Joi.number().optional(),
+    }).unknown(false)
+})
+
+export const validateOrderQuery = celebrate({
+    query: Joi.object({
+        page: Joi.number().integer().min(1).optional(),
+        limit: Joi.number().integer().min(1).max(100).optional(),
+        sortField: Joi.string().valid('createdAt', 'totalAmount', 'orderNumber', 'status').optional(),
+        sortOrder: Joi.string().valid('asc', 'desc').optional(),
+        search: Joi.string().max(100).optional(),
+        status: Joi.string().valid('new', 'delivering', 'completed', 'cancelled').optional(),
+        totalAmountFrom: Joi.number().optional(),
+        totalAmountTo: Joi.number().optional(),
+        orderDateFrom: Joi.date().iso().optional(),
+        orderDateTo: Joi.date().iso().optional(),
+    }).unknown(false)
+});
+
+export const validateUserOrderQuery = celebrate({
+    query: Joi.object({
+        page: Joi.number().integer().min(1).optional(),
+        limit: Joi.number().integer().min(1).max(100).optional(),
+        search: Joi.string().max(100).optional(),
+    }).unknown(false)
+});
