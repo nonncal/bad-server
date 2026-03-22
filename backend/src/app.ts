@@ -20,7 +20,7 @@ app.use(cookieParser())
 app.use(cors({ origin: process.env.ORIGIN_ALLOW, credentials: true }));
 // app.use(express.static(path.join(__dirname, 'public')));
 
-app.get('/csrf-token', csrfProtection, csrfMiddleware)
+app.get('/auth/csrf-token', csrfProtection, csrfMiddleware)
 
 app.use((req, res, next) => {
     if(!['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {

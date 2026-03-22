@@ -4,7 +4,7 @@ import { Request, Response, NextFunction } from 'express';
 export const csrfProtection = csrf({
   cookie: {
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    sameSite: 'lax',
     httpOnly: true,
   },
 });

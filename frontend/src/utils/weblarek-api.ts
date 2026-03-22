@@ -63,6 +63,7 @@ class Api {
             const res = await fetch(`${this.baseUrl}${endpoint}`, {
                 ...this.options,
                 ...options,
+                credentials: 'include',
                 headers,
             })
             return await this.handleResponse<T>(res)
