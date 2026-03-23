@@ -7,7 +7,7 @@ import {
 } from '../controllers/customers'
 import auth, { roleGuardMiddleware } from '../middlewares/auth'
 import { Role } from '../models/user'
-import { validateCustomerQuery } from 'middlewares/validations'
+import { validateCustomerQuery } from '../middlewares/validations'
 
 const customerRouter = Router()
 
