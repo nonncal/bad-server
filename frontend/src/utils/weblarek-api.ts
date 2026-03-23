@@ -55,22 +55,25 @@ class Api {
     }
 
     protected async request<T>(endpoint: string, options: RequestInit) {
-        const headers = {
-            ...options.headers,
-            'CSRF-Token': await fetchCsrfToken(),
-        }
-        try {
-            const res = await fetch(`${this.baseUrl}${endpoint}`, {
-                ...this.options,
-                ...options,
-                credentials: 'include',
-                headers,
-            })
-            return await this.handleResponse<T>(res)
-        } catch (error) {
-            return Promise.reject(error)
-        }
+    const isAuth = endpoint.startsWith('/auth')
+
+    const headers = {
+        ...options.headers,
+        ...(isAuth ? {} : { 'CSRF-Token': await fetchCsrfToken() }),
     }
+
+    try {
+        const res = await fetch(`${this.baseUrl}${endpoint}`, {
+            ...this.options,
+            ...options,
+            credentials: 'include',
+            headers,
+        })
+        return await this.handleResponse<T>(res)
+    } catch (error) {
+        return Promise.reject(error)
+    }
+}
 
     private refreshToken = () => {
         return this.request<UserResponseToken>('/auth/token', {
@@ -91,11 +94,13 @@ class Api {
                 return Promise.reject(refreshData)
             }
             setCookie('accessToken', refreshData.accessToken)
+            const isAuth = endpoint.startsWith('/auth')
+
             return await this.request<T>(endpoint, {
                 ...options,
                 headers: {
                     ...options.headers,
-                    'CSRF-Token': await fetchCsrfToken(),
+                    ...(isAuth ? {} : { 'CSRF-Token': await fetchCsrfToken() }),
                     Authorization: `Bearer ${getCookie('accessToken')}`,
                 },
             })

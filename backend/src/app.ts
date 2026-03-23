@@ -20,9 +20,17 @@ app.use(cookieParser())
 app.use(cors({ origin: process.env.ORIGIN_ALLOW, credentials: true }));
 // app.use(express.static(path.join(__dirname, 'public')));
 
-app.use(csrfProtection)
-
 app.get('/auth/csrf-token', csrfProtection, csrfMiddleware)
+
+app.use((req, res, next) => {
+    const isAuthRoute = req.path.startsWith('/auth')
+
+    if (!isAuthRoute && !['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+        return csrfProtection(req, res, next)
+    }
+
+    return next()
+})
 
 app.use(serveStatic(path.join(__dirname, 'public')))
 
