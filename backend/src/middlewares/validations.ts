@@ -9,7 +9,6 @@ export enum PaymentType {
     Online = 'online',
 }
 
-// валидация id
 export const validateOrderBody = celebrate({
     body: Joi.object().keys({
         items: Joi.array()
@@ -35,7 +34,7 @@ export const validateOrderBody = celebrate({
         email: Joi.string().email().required().messages({
             'string.empty': 'Не указан email',
         }),
-        phone: Joi.string().required().pattern(phoneRegExp).max(15).min(5).messages({
+        phone: Joi.string().required().pattern(phoneRegExp).max(20).min(6).messages({
             'string.empty': 'Не указан телефон',
             'string.min': 'Номер телефон слишком короткий',
             'string.max': 'Номер телефона слишком длинный',

@@ -35,12 +35,15 @@ app.use((req, res, next) => {
 
 app.use(serveStatic(path.join(__dirname, 'public')))
 
-app.use(urlencoded({ extended: true , limit: '5mb'}))
-app.use(json({limit: '5mb'}))
+app.use(urlencoded({ extended: true , limit: '10mb'}))
+app.use(json({limit: '10mb'}))
 
-app.options('*', cors())
+app.options('*', cors({    origin: 'http://localhost:5173',
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,}))
 
-app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 , limit: 50}))
+app.use(rateLimit({ windowMs: 30 * 1000, max: 50 }))
 app.use(routes)
 app.use(errors())
 app.use(errorHandler)
