@@ -3,7 +3,7 @@
 ## Обо мне
 1. Имя: Кирилл ✅
 2. Когорта: 39
-3. [Репозиторий](https://github.com/nonncal/bad-server)
+3. Репозиторий: https://github.com/nonncal/bad-server
 
 ## Подготовка к работе
 1. Склонировать репозиторий
