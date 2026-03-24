@@ -18,6 +18,11 @@ export const csrfMiddleware = (req: Request, res: Response, next: NextFunction) 
     const token = tokens.create(secret)
     res.locals.csrfToken = token
 
+    res.cookie('_csrf', token, {
+        httpOnly: false, 
+        sameSite: 'lax',
+    })
+
     next()
 }
 
