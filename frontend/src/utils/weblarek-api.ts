@@ -103,7 +103,7 @@ class Api {
     ) => {
         try {
             return await this.request<T>(endpoint, options)
-        } catch (error: any) {
+        } catch (error: unknown) {
             // ←←← ГЛАВНОЕ ИСПРАВЛЕНИЕ: если нет accessToken — НЕ пытаемся рефрешить
             const accessToken = getCookie('accessToken')
             if (!accessToken || accessToken === 'undefined' || accessToken.length < 20) {

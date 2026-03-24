@@ -9,7 +9,12 @@ import {
     updateOrder,
 } from '../controllers/order'
 import auth, { roleGuardMiddleware } from '../middlewares/auth'
-import { validateOrderBody, validateOrderQuery, validateUserOrderQuery } from '../middlewares/validations'
+import {
+    validateOrderBody,
+    validateOrderQuery,
+    validateOrderStatusBody,
+    validateUserOrderQuery,
+} from '../middlewares/validations'
 import { Role } from '../models/user'
 
 const orderRouter = Router()
@@ -28,6 +33,7 @@ orderRouter.patch(
     '/:orderNumber',
     auth,
     roleGuardMiddleware(Role.Admin),
+    validateOrderStatusBody,
     updateOrder
 )
 

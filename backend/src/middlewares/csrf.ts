@@ -2,14 +2,16 @@ import Tokens from 'csrf'
 import { Request, Response, NextFunction } from 'express'
 
 const tokens = new Tokens()
+const csrfSecretCookieName = '_csrfSecret'
+const csrfCookieName = '_csrf'
 
 export const csrfMiddleware = (req: Request, res: Response, next: NextFunction) => {
-    let secret = req.cookies._csrfSecret
+    let secret = req.cookies[csrfSecretCookieName]
 
     if (!secret) {
         secret = tokens.secretSync()
 
-        res.cookie('_csrfSecret', secret, {
+        res.cookie(csrfSecretCookieName, secret, {
             httpOnly: true,
             sameSite: 'lax',
         })
@@ -18,7 +20,7 @@ export const csrfMiddleware = (req: Request, res: Response, next: NextFunction) 
     const token = tokens.create(secret)
     res.locals.csrfToken = token
 
-    res.cookie('_csrf', token, {
+    res.cookie(csrfCookieName, token, {
         httpOnly: false, 
         sameSite: 'lax',
     })
@@ -34,9 +36,9 @@ export const csrfProtection = (req: Request, res: Response, next: NextFunction) 
     const token =
         req.headers['csrf-token'] ||
         req.headers['x-csrf-token'] ||
-        req.body?._csrf
+        req.body?.[csrfCookieName]
 
-    const secret = req.cookies._csrfSecret
+    const secret = req.cookies[csrfSecretCookieName]
 
     if (!token || !secret || !tokens.verify(secret, token as string)) {
         return res.status(403).json({ message: 'Invalid CSRF token' })

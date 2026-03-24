@@ -1,8 +1,25 @@
 import { Joi, celebrate } from 'celebrate'
 import { Types } from 'mongoose'
 
-// eslint-disable-next-line no-useless-escape
-export const phoneRegExp = /^(\+\d+)?(?:\s|-?|\(?\d+\)?)+$/
+export const phoneRegExp = /^\+?[0-9()\s-]+$/
+
+export const isValidPhone = (value: string) => {
+    if (typeof value !== 'string') {
+        return false
+    }
+
+    if (value.length < 6 || value.length > 20) {
+        return false
+    }
+
+    if (!phoneRegExp.test(value)) {
+        return false
+    }
+
+    const digitsOnly = value.replace(/\D/g, '')
+
+    return digitsOnly.length >= 6 && digitsOnly.length <= 15
+}
 
 export enum PaymentType {
     Card = 'card',
@@ -34,11 +51,18 @@ export const validateOrderBody = celebrate({
         email: Joi.string().email().max(30).required().messages({
             'string.empty': 'Не указан email',
         }),
-        phone: Joi.string().required().pattern(phoneRegExp).max(20).min(6).messages({
-            'string.empty': 'Не указан телефон',
-            'string.min': 'Номер телефон слишком короткий',
-            'string.max': 'Номер телефона слишком длинный',
-        }),
+        phone: Joi.string()
+            .required()
+            .custom((value, helpers) => {
+                if (isValidPhone(value)) {
+                    return value
+                }
+
+                return helpers.message({ custom: 'Номер телефона указан неверно' })
+            })
+            .messages({
+                'string.empty': 'Не указан телефон',
+            }),
         address: Joi.string().required().messages({
             'string.empty': 'Не указан адрес',
         }),
@@ -135,10 +159,67 @@ export const validateAuthentication = celebrate({
     }),
 })
 
+export const validateUserUpdateBody = celebrate({
+    body: Joi.object({
+        name: Joi.string().min(2).max(30).optional().messages({
+            'string.min': 'Минимальная длина поля "name" - 2',
+            'string.max': 'Максимальная длина поля "name" - 30',
+        }),
+        email: Joi.string()
+            .email()
+            .optional()
+            .message('Поле "email" должно быть валидным email-адресом'),
+        phone: Joi.string()
+            .optional()
+            .allow('')
+            .custom((value, helpers) => {
+                if (value === '' || isValidPhone(value)) {
+                    return value
+                }
+
+                return helpers.message({ custom: 'Номер телефона указан неверно' })
+            }),
+    }).unknown(false),
+})
+
+export const validateCustomerUpdateBody = celebrate({
+    body: Joi.object({
+        name: Joi.string().min(2).max(30).optional().messages({
+            'string.min': 'Минимальная длина поля "name" - 2',
+            'string.max': 'Максимальная длина поля "name" - 30',
+        }),
+        email: Joi.string()
+            .email()
+            .optional()
+            .message('Поле "email" должно быть валидным email-адресом'),
+        phone: Joi.string()
+            .optional()
+            .allow('')
+            .custom((value, helpers) => {
+                if (value === '' || isValidPhone(value)) {
+                    return value
+                }
+
+                return helpers.message({ custom: 'Номер телефона указан неверно' })
+            }),
+        roles: Joi.array()
+            .items(Joi.string().valid('customer', 'admin'))
+            .optional(),
+    }).unknown(false),
+})
+
+export const validateOrderStatusBody = celebrate({
+    body: Joi.object({
+        status: Joi.string()
+            .valid('new', 'delivering', 'completed', 'cancelled')
+            .required(),
+    }).unknown(false),
+})
+
 export const validateCustomerQuery = celebrate({
     query: Joi.object({
         page: Joi.number().integer().min(1).max(100),
-        limit: Joi.number().integer().min(1).max(100),
+        limit: Joi.number().integer().min(1),
         sortField: Joi.string().valid('createdAt', 'totalAmount', 'orderCount', 'lastOrderDate'),
         sortOrder: Joi.string().valid('asc', 'desc'),
         search: Joi.string(),
@@ -156,7 +237,7 @@ export const validateCustomerQuery = celebrate({
 export const validateOrderQuery = celebrate({
     query: Joi.object({
         page: Joi.number().integer().min(1).optional(),
-        limit: Joi.number().integer().min(1).max(100).optional(),
+        limit: Joi.number().integer().min(1).optional(),
         sortField: Joi.string().valid('createdAt', 'totalAmount', 'orderNumber', 'status').optional(),
         sortOrder: Joi.string().valid('asc', 'desc').optional(),
         search: Joi.string().max(100).optional(),
@@ -171,7 +252,7 @@ export const validateOrderQuery = celebrate({
 export const validateUserOrderQuery = celebrate({
     query: Joi.object({
         page: Joi.number().integer().min(1).optional(),
-        limit: Joi.number().integer().min(1).max(100).optional(),
+        limit: Joi.number().integer().min(1).optional(),
         search: Joi.string().max(100).optional(),
     }).unknown(false)
 });

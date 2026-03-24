@@ -194,6 +194,7 @@ const updateCurrentUser = async (
     try {
         const updatedUser = await User.findByIdAndUpdate(userId, req.body, {
             new: true,
+            runValidators: true,
         }).orFail(
             () =>
                 new NotFoundError(
