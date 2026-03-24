@@ -24,12 +24,13 @@ app.get('/auth/csrf-token', csrfMiddleware, csrfTokenHandler)
 
 app.use((req, res, next) => {
     if (
-        !req.path.startsWith('/auth') &&
-        !['GET', 'HEAD', 'OPTIONS'].includes(req.method)
+        req.path.startsWith('/auth') || 
+        ['GET', 'HEAD', 'OPTIONS'].includes(req.method)
     ) {
-        return csrfProtection(req, res, next)
+        return next()
     }
-    next()
+
+    return csrfProtection(req, res, next)
 })
 
 app.use(serveStatic(path.join(__dirname, 'public')))
