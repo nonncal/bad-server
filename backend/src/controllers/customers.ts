@@ -4,6 +4,7 @@ import NotFoundError from '../errors/not-found-error'
 import Order from '../models/order'
 import User, { IUser } from '../models/user'
 import escapeRegExp from '../utils/escapeRegExp'
+import BadRequestError from 'errors/bad-request-error'
 
 // TODO: Добавить guard admin
 // eslint-disable-next-line max-len
@@ -30,7 +31,13 @@ export const getCustomers = async (
             search,
         } = req.query
 
+        if (Number.isNaN(Number(page)) || Number.isNaN(Number(limit))) {
+            throw new BadRequestError('Некорректные параметры');
+        }
+
         const normalizedLimit = Math.min(Number(limit), 10); 
+        const normalizedPage = Math.max(Number(page), 1);  
+        
         const filters: FilterQuery<Partial<IUser>> = {}
 
         if (registrationDateFrom) {
@@ -119,7 +126,7 @@ export const getCustomers = async (
 
         const options = {
             sort,
-            skip: (Number(page) - 1) * normalizedLimit,
+            skip: (normalizedPage - 1) * normalizedLimit,
             limit: normalizedLimit,
         }
 
@@ -140,14 +147,14 @@ export const getCustomers = async (
         ])
 
         const totalUsers = await User.countDocuments(filters)
-        const totalPages = Math.ceil(totalUsers / Number(normalizedLimit))
+        const totalPages = Math.ceil(totalUsers / normalizedLimit)
 
         res.status(200).json({
             customers: users,
             pagination: {
                 totalUsers,
                 totalPages,
-                currentPage: Number(page),
+                currentPage: normalizedPage,
                 pageSize: normalizedLimit,
             },
         })

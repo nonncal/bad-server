@@ -30,7 +30,7 @@ const storage = multer.diskStorage({
         file: Express.Multer.File,
         cb: FileNameCallback
     ) => {
-         const uniqueName = Date.now() + '_' + randomUUID();
+        const uniqueName = `${Date.now()  }_${randomUUID()}`;
         const ext = path.extname(file.originalname);
         const filename = `${uniqueName}${ext}`;
         cb(null, filename)

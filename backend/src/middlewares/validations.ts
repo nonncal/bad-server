@@ -31,7 +31,7 @@ export const validateOrderBody = celebrate({
                     'Указано не валидное значение для способа оплаты, возможные значения - "card", "online"',
                 'string.empty': 'Не указан способ оплаты',
             }),
-        email: Joi.string().email().required().messages({
+        email: Joi.string().email().max(30).required().messages({
             'string.empty': 'Не указан email',
         }),
         phone: Joi.string().required().pattern(phoneRegExp).max(20).min(6).messages({

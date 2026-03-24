@@ -13,11 +13,18 @@ import routes from './routes'
 import { csrfMiddleware, csrfProtection, csrfTokenHandler } from './middlewares/csrf'
 
 const { PORT = 3000 } = process.env
+const { ORIGIN_ALLOW } = process.env
 const app = express()
 
 app.use(cookieParser())
 
-app.use(cors({ origin: process.env.ORIGIN_ALLOW, credentials: true }));
+app.use(cors({ 
+    origin: ORIGIN_ALLOW,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+}));
+
 // app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/auth/csrf-token', csrfMiddleware, csrfTokenHandler)
@@ -38,12 +45,17 @@ app.use(serveStatic(path.join(__dirname, 'public')))
 app.use(urlencoded({ extended: true , limit: '10mb'}))
 app.use(json({limit: '10mb'}))
 
-app.options('*', cors({    origin: 'http://localhost:5173',
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true,}))
+app.options('*', cors({}))
 
-app.use(rateLimit({ windowMs: 30 * 1000, max: 50 }))
+const limit = rateLimit({
+  windowMs: 30 * 1000, 
+  max: 50,
+  message: { error: 'Слишком много запросов.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use(limit)
 app.use(routes)
 app.use(errors())
 app.use(errorHandler)
