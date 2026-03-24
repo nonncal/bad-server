@@ -26,7 +26,8 @@
     "react-simple-wysiwyg": "^3.0.3",
     "react-toastify": "^10.0.5",
     "redux-persist": "^6.0.0",
-    "vite-plugin-svgr": "^4.2.0"
+    "vite-plugin-svgr": "^4.5.0",
+    "vite-tsconfig-paths": "^6.1.1"
   },
   "devDependencies": {
     "@types/node": "^20.12.12",
@@ -35,7 +36,7 @@
     "@types/redux-persist": "^4.3.1",
     "@typescript-eslint/eslint-plugin": "^7.2.0",
     "@typescript-eslint/parser": "^7.2.0",
-    "@vitejs/plugin-react": "^4.2.1",
+    "@vitejs/plugin-react": "^6.0.1",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.29.1",
@@ -43,8 +44,7 @@
     "eslint-plugin-react-refresh": "^0.4.6",
     "prettier": "^3.3.3",
     "sass": "^1.77.2",
-    "typescript": "^5.2.2",
-    "vite": "^5.2.0",
-    "vite-tsconfig-paths": "^4.3.2"
+    "typescript": "^6.0.2",
+    "vite": "^8.0.2"
   }
 }

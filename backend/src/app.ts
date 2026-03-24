@@ -10,7 +10,7 @@ import { DB_ADDRESS } from './config'
 import errorHandler from './middlewares/error-handler'
 import serveStatic from './middlewares/serverStatic'
 import routes from './routes'
-import { csrfErrorHandler, csrfMiddleware, csrfProtection } from './middlewares/csrf'
+import { csrfMiddleware, csrfProtection, csrfTokenHandler } from './middlewares/csrf'
 
 const { PORT = 3000 } = process.env
 const app = express()
@@ -20,16 +20,16 @@ app.use(cookieParser())
 app.use(cors({ origin: process.env.ORIGIN_ALLOW, credentials: true }));
 // app.use(express.static(path.join(__dirname, 'public')));
 
-app.get('/auth/csrf-token', csrfProtection, csrfMiddleware)
+app.get('/auth/csrf-token', csrfMiddleware, csrfTokenHandler)
 
 app.use((req, res, next) => {
-    const isAuthRoute = req.path.startsWith('/auth')
-
-    if (!isAuthRoute && !['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+    if (
+        !req.path.startsWith('/auth') &&
+        !['GET', 'HEAD', 'OPTIONS'].includes(req.method)
+    ) {
         return csrfProtection(req, res, next)
     }
-
-    return next()
+    next()
 })
 
 app.use(serveStatic(path.join(__dirname, 'public')))
@@ -42,7 +42,6 @@ app.options('*', cors())
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 , limit: 50}))
 app.use(routes)
 app.use(errors())
-app.use(csrfErrorHandler)
 app.use(errorHandler)
 
 // eslint-disable-next-line no-console
