@@ -31,12 +31,10 @@ export const getCustomers = async (
             search,
         } = req.query
 
-        if (Number.isNaN(Number(page)) || Number.isNaN(Number(limit))) {
-            throw new BadRequestError('Некорректные параметры');
-        }
-
-        const normalizedLimit = Math.min(Number(limit), 10); 
-        const normalizedPage = Math.max(Number(page), 1);  
+        const pageNum = Number(page) || 1
+        const limitNum = Number(limit) || 10
+        const normalizedLimit = Math.min(limitNum, 10)
+        const normalizedPage = Math.max(pageNum, 1)
         
         const filters: FilterQuery<Partial<IUser>> = {}
 

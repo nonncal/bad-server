@@ -48,8 +48,8 @@ app.use(json({limit: '10mb'}))
 app.options('*', cors({}))
 
 const limit = rateLimit({
-  windowMs: 30 * 1000, 
-  max: 50,
+  windowMs: 1000, 
+  max: 5,
   message: { error: 'Слишком много запросов.' },
   standardHeaders: true,
   legacyHeaders: false,

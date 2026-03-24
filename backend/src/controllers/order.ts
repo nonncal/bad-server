@@ -31,11 +31,11 @@ export const getOrders = async (
         } = req.query
 
         const filters: FilterQuery<Partial<IOrder>> = {}
-        if (Number.isNaN(Number(page)) || Number.isNaN(Number(limit))) {
-            throw new BadRequestError('Некорректные параметры');
-        }
-        const normalizedLimit = Math.min(Number(limit), 10);
-        const normalizedPage = Math.max(Number(page), 1);
+        
+        const pageNum = Number(page) || 1
+        const limitNum = Number(limit) || 10
+        const normalizedLimit = Math.min(limitNum, 10)
+        const normalizedPage = Math.max(pageNum, 1)
 
         if (status) {
             if (typeof status === 'object') {
