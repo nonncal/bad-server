@@ -168,7 +168,9 @@ export const validateUserUpdateBody = celebrate({
         email: Joi.string()
             .email()
             .optional()
-            .message('Поле "email" должно быть валидным email-адресом'),
+            .messages({
+                'string.email': 'Поле "email" должно быть валидным email-адресом',
+            }),
         phone: Joi.string()
             .optional()
             .allow('')
@@ -191,7 +193,9 @@ export const validateCustomerUpdateBody = celebrate({
         email: Joi.string()
             .email()
             .optional()
-            .message('Поле "email" должно быть валидным email-адресом'),
+            .messages({
+                'string.email': 'Поле "email" должно быть валидным email-адресом',
+            }),
         phone: Joi.string()
             .optional()
             .allow('')
