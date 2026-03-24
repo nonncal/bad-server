@@ -10,15 +10,17 @@ import UserModel, { Role } from '../models/user'
 // есть файл middlewares/auth.js, в нём мидлвэр для проверки JWT;
 
 const auth = async (req: Request, res: Response, next: NextFunction) => {
-    let payload: JwtPayload | null = null
     const authHeader = req.header('Authorization')
+
     if (!authHeader?.startsWith('Bearer ')) {
-        throw new UnauthorizedError('Невалидный токен')
+        return next(new UnauthorizedError('Невалидный токен'))
     }
+
+    const accessTokenParts = authHeader.split(' ')
+    const aTkn = accessTokenParts[1]
+
     try {
-        const accessTokenParts = authHeader.split(' ')
-        const aTkn = accessTokenParts[1]
-        payload = jwt.verify(aTkn, ACCESS_TOKEN.secret) as JwtPayload
+        const payload = jwt.verify(aTkn, ACCESS_TOKEN.secret) as JwtPayload
 
         const user = await UserModel.findOne(
             {
@@ -30,6 +32,7 @@ const auth = async (req: Request, res: Response, next: NextFunction) => {
         if (!user) {
             return next(new ForbiddenError('Нет доступа'))
         }
+
         res.locals.user = user
 
         return next()
@@ -37,6 +40,7 @@ const auth = async (req: Request, res: Response, next: NextFunction) => {
         if (error instanceof Error && error.name === 'TokenExpiredError') {
             return next(new UnauthorizedError('Истек срок действия токена'))
         }
+
         return next(new UnauthorizedError('Необходима авторизация'))
     }
 }

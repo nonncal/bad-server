@@ -18,10 +18,10 @@ interface Field {
 interface FilterSelectedState {
     [key: string]: FieldOption
 }
+type FilterValue = string | number | FieldOption | null | undefined
 interface FilterComponentProps {
     fields: Field[]
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onFilter: (filters: Record<string, any>) => void
+    onFilter: (filters: Record<string, FilterValue>) => void
     onClear: () => void
     defaultValue?: FiltersOrder | FiltersCustomers
 }
@@ -65,10 +65,10 @@ const Filter = ({
                                     selected={selects[field.name!] || null}
                                     placeholder='Выберите статус'
                                     onChange={(option) =>
-                                        setSelects({
-                                            ...selects,
+                                        setSelects((prev) => ({
+                                            ...prev,
                                             [field.name!]: option,
-                                        })
+                                        }))
                                     }
                                 />
                             )
@@ -111,7 +111,7 @@ const Filter = ({
                 (item) => item.value === (defaultValue as FiltersOrder)?.status
             )
             if (status) {
-                setSelects({ ...selects, status })
+                setSelects((prev) => ({ ...prev, status }))
             }
         }
     }, [defaultValue])

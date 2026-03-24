@@ -16,6 +16,7 @@ import {
     UserResponse,
     UserResponseToken,
 } from '@types'
+
 import { getCookie, setCookie } from './cookie'
 
 export const enum RequestStatus {
@@ -33,12 +34,15 @@ export type ApiListResponse<Type> = {
 class Api {
     private readonly baseUrl: string
     protected options: RequestInit
+    private csrfToken: string = ''
 
     constructor(baseUrl: string, options: RequestInit = {}) {
         this.baseUrl = baseUrl
         this.options = {
+            credentials: 'include',
             headers: {
                 ...((options.headers as object) ?? {}),
+                'x-csrf-token': getCookie('_csrf') ?? '',
             },
         }
     }
@@ -53,11 +57,32 @@ class Api {
                   )
     }
 
+    private async getCsrfToken(): Promise<string> {
+        if (this.csrfToken) return this.csrfToken
+
+        const res = await fetch(`${this.baseUrl}/auth/csrf-token`, {
+            credentials: 'include',
+        })
+        const data = await res.json()
+        this.csrfToken = data.csrfToken || ''
+        setCookie('_csrf', this.csrfToken)
+        return this.csrfToken
+    }
+
     protected async request<T>(endpoint: string, options: RequestInit) {
         try {
+            let headers = {
+                ...(this.options.headers || {}),
+                ...(options.headers || {}),
+            }
+
+            const csrfToken = await this.getCsrfToken()
+            headers = { ...headers, 'x-csrf-token': csrfToken }
+
             const res = await fetch(`${this.baseUrl}${endpoint}`, {
                 ...this.options,
                 ...options,
+                headers,
             })
             return await this.handleResponse<T>(res)
         } catch (error) {
@@ -78,12 +103,22 @@ class Api {
     ) => {
         try {
             return await this.request<T>(endpoint, options)
-        } catch (error) {
-            const refreshData = await this.refreshToken()
-            if (!refreshData.success) {
-                return Promise.reject(refreshData)
+        } catch (error: unknown) {
+            // ←←← ГЛАВНОЕ ИСПРАВЛЕНИЕ: если нет accessToken — НЕ пытаемся рефрешить
+            const accessToken = getCookie('accessToken')
+            if (!accessToken || accessToken === 'undefined' || accessToken.length < 20) {
+                throw error
             }
+
+            const refreshData = await this.refreshToken().catch(() => null)
+
+            if (!refreshData?.success) {
+                document.cookie = 'accessToken=; Max-Age=0; path=/;'
+                return Promise.reject(refreshData || error)
+            }
+
             setCookie('accessToken', refreshData.accessToken)
+
             return await this.request<T>(endpoint, {
                 ...options,
                 headers: {
@@ -95,15 +130,7 @@ class Api {
     }
 }
 
-export interface IWebLarekAPI {
-    getProductList: (
-        filters: Record<string, unknown>
-    ) => Promise<IProductPaginationResult>
-    getProductItem: (id: string) => Promise<IProduct>
-    createOrder: (order: IOrder) => Promise<IOrderResult>
-}
-
-export class WebLarekAPI extends Api implements IWebLarekAPI {
+export class WebLarekAPI extends Api {
     readonly cdn: string
 
     constructor(cdn: string, baseUrl: string, options?: RequestInit) {
@@ -131,9 +158,7 @@ export class WebLarekAPI extends Api implements IWebLarekAPI {
         ).toString()
         return this.request<IProductPaginationResult>(
             `/product?${queryParams}`,
-            {
-                method: 'GET',
-            }
+            { method: 'GET' }
         ).then((data) => ({
             ...data,
             items: data.items.map((item) => ({
@@ -247,48 +272,27 @@ export class WebLarekAPI extends Api implements IWebLarekAPI {
             credentials: 'include',
         })
     }
-
+    
     getUser = () => {
+        const token = getCookie('accessToken')
+        if (!token || token === 'undefined' || token.length < 20) {
+            return Promise.reject({ statusCode: 401, message: 'Не валидный токен' })
+        }
         return this.requestWithRefresh<UserResponse>('/auth/user', {
             method: 'GET',
-            headers: { Authorization: `Bearer ${getCookie('accessToken')}` },
+            headers: { Authorization: `Bearer ${token}` },
         })
     }
 
     getUserRoles = () => {
+        const token = getCookie('accessToken')
+        if (!token || token === 'undefined' || token.length < 20) {
+            return Promise.reject({ statusCode: 401, message: 'Не валидный токен' })
+        }
         return this.requestWithRefresh<string[]>('/auth/user/roles', {
             method: 'GET',
-            headers: { Authorization: `Bearer ${getCookie('accessToken')}` },
+            headers: { Authorization: `Bearer ${token}` },
         })
-    }
-
-    getAllCustomers = (
-        filters: Record<string, unknown> = {}
-    ): Promise<ICustomerPaginationResult> => {
-        const queryParams = new URLSearchParams(
-            filters as Record<string, string>
-        ).toString()
-        return this.requestWithRefresh<ICustomerPaginationResult>(
-            `/customers?${queryParams}`,
-            {
-                method: 'GET',
-                headers: {
-                    Authorization: `Bearer ${getCookie('accessToken')}`,
-                },
-            }
-        )
-    }
-
-    getCustomerById = (idCustomer: string) => {
-        return this.requestWithRefresh<ICustomerResult>(
-            `/customers/${idCustomer}`,
-            {
-                method: 'GET',
-                headers: {
-                    Authorization: `Bearer ${getCookie('accessToken')}`,
-                },
-            }
-        )
     }
 
     logoutUser = () => {
@@ -299,7 +303,6 @@ export class WebLarekAPI extends Api implements IWebLarekAPI {
     }
 
     createProduct = (data: Omit<IProduct, '_id'>) => {
-        console.log(data)
         return this.requestWithRefresh<IProduct>('/product', {
             method: 'POST',
             body: JSON.stringify(data),
@@ -353,6 +356,35 @@ export class WebLarekAPI extends Api implements IWebLarekAPI {
                 Authorization: `Bearer ${getCookie('accessToken')}`,
             },
         })
+    }
+
+    getAllCustomers = (
+        filters: Record<string, unknown> = {}
+    ): Promise<ICustomerPaginationResult> => {
+        const queryParams = new URLSearchParams(
+            filters as Record<string, string>
+        ).toString()
+        return this.requestWithRefresh<ICustomerPaginationResult>(
+            `/customers?${queryParams}`,
+            {
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${getCookie('accessToken')}`,
+                },
+            }
+        )
+    }
+
+    getCustomerById = (idCustomer: string) => {
+        return this.requestWithRefresh<ICustomerResult>(
+            `/customers/${idCustomer}`,
+            {
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${getCookie('accessToken')}`,
+                },
+            }
+        )
     }
 }
 

@@ -5,6 +5,7 @@ import { OrderData } from '@slices/orders/type'
 import { useActionCreators, useDispatch, useSelector } from '@store/hooks'
 import { StatusType } from '@types'
 import clsx from 'clsx'
+import  DOMPurify  from 'dompurify'
 import { format } from 'date-fns'
 import { useEffect, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -103,7 +104,7 @@ export default function AdminOrderDetail() {
                     <>
                         <div
                             dangerouslySetInnerHTML={{
-                                __html: dataInfo.comment,
+                                __html: DOMPurify.sanitize(dataInfo.comment),
                             }}
                         />
                     </>
@@ -124,7 +125,7 @@ export default function AdminOrderDetail() {
                 extraClass: styles.admin__gridRowFullWidth,
             },
         ],
-        [orderData]
+        [navigate, orderData]
     )
 
     if (!orderData) {
